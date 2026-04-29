@@ -1,18 +1,35 @@
-import { clearAgentExecutionLogs, configuredAgents, createDeepClawPlan, executeRoutedPrompt, formatFinalAnswerPortuguese, getAgentExecutionLogs, getTokenUsageLogs } from '@operix-mind/ai-agents';
-import { addLog } from '../logs/logs.service.js';
+import { clearAgentExecutionLogs, configuredAgents, createDeepClawPlan, executeRoutedPrompt, formatFinalAnswerPortuguese, getAgentExecutionLogs, getTokenUsageLogs, estimateTokens } from '@operix-mind/ai-agents';
+import { config } from '../../config/config.service.js';
+import { addAuditLog, addSecurityLog } from '../logs/logs.service.js';
+import { detectPromptInjection, limitContext, logAiUsage, registerAiUsage, sanitizePrompt } from '../security/ai-security.service.js';
 export async function executeAiFlow(input) {
     clearAgentExecutionLogs();
-    addLog({
-        level: 'info',
+    const sanitized = limitContext(sanitizePrompt(input.mensagem));
+    const flagged = detectPromptInjection(input.mensagem);
+    const userId = input.userId || 'anonymous';
+    const tokenBudget = estimateTokens(sanitized);
+    const quota = registerAiUsage({
+        userId,
+        tokens: tokenBudget,
+        limitTokens: config.security.maxAiTokensPerHour,
+        limitRequests: config.security.maxAiRequestsPerHour
+    });
+    if (quota.blocked) {
+        throw new Error('Limite de uso de IA excedido.');
+    }
+    if (flagged) {
+        addSecurityLog('ai', 'Tentativa de prompt injection detectada.', { userId, mensagem: sanitized });
+    }
+    addAuditLog({
         origem: 'ai',
         mensagem: 'Fluxo Deep Claw iniciado.',
-        detalhes: { mensagem: input.mensagem }
+        detalhes: { userId, mensagem: sanitized.slice(0, 240) }
     });
-    const plano = createDeepClawPlan(input.mensagem);
+    const plano = createDeepClawPlan(sanitized);
     const respostas = [];
     for (const tarefa of plano.tarefas) {
         const resposta = await executeRoutedPrompt({
-            input: `${input.mensagem}\n\nTarefa: ${tarefa.objetivo}`,
+            input: `${sanitized}\n\nTarefa: ${tarefa.objetivo}`,
             taskType: tarefa.tipo,
             language: 'pt-BR'
         });
@@ -29,15 +46,16 @@ export async function executeAiFlow(input) {
         '',
         'Status: fluxo simulado concluído com sucesso.'
     ].join('\n'));
-    addLog({
-        level: 'sucesso',
+    addAuditLog({
         origem: 'ai',
         mensagem: 'Fluxo Deep Claw concluído.',
         detalhes: {
+            userId,
             agentes: respostas.map((resposta) => resposta.agentName),
             tokens: getTokenUsageLogs()
         }
     });
+    logAiUsage({ userId, action: 'execute', model: respostas[0]?.model, tokens: tokenBudget });
     return {
         plano,
         respostas,

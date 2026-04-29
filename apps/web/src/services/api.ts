@@ -38,11 +38,15 @@ export interface Usuario {
   nome: string;
   email: string;
   plano: string;
+  role?: string;
 }
 
 export interface AuthResult {
   usuario: Usuario;
   token: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn?: string;
 }
 
 export interface ProjectInfo {
@@ -159,7 +163,7 @@ export async function login(email: string, senha: string): Promise<AuthResult> {
     method: 'POST',
     body: JSON.stringify({ email, senha })
   });
-  setAuthToken(response.dados.token);
+  setAuthToken(response.dados.accessToken || response.dados.token);
   return response.dados;
 }
 

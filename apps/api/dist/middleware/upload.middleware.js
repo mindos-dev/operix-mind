@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
-import path from 'node:path';
 import multer from 'multer';
-const uploadDir = path.resolve(process.cwd(), 'storage/uploads');
+import { getQuarantineDir, getUploadLimitBytes, isAllowedUpload, sanitizeFilename } from '../modules/security/file-security.service.js';
+const uploadDir = getQuarantineDir();
 const allowedExtensions = new Set([
     'pdf',
     'doc',
@@ -27,18 +27,18 @@ const storage = multer.diskStorage({
         callback(null, uploadDir);
     },
     filename: (_req, file, callback) => {
-        const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const safeName = sanitizeFilename(file.originalname);
         callback(null, `${Date.now()}-${safeName}`);
     }
 });
 export const uploadSingleFile = multer({
     storage,
     limits: {
-        fileSize: 25 * 1024 * 1024
+        fileSize: getUploadLimitBytes()
     },
     fileFilter: (_req, file, callback) => {
         const extension = file.originalname.includes('.') ? file.originalname.split('.').pop()?.toLowerCase() : '';
-        if (!extension || !allowedExtensions.has(extension)) {
+        if (!extension || !allowedExtensions.has(extension) || !isAllowedUpload(file.originalname, file.mimetype)) {
             callback(new Error('Formato de arquivo não permitido.'));
             return;
         }

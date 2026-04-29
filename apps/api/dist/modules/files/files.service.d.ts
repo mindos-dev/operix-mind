@@ -19,3 +19,4 @@ export declare function createFileRecord(input: {
     mimetype?: string;
 }): FileRecord;
 export declare function listFiles(userId: string): FileRecord[];
+export declare function deleteFilesByUserId(userId: string): void;

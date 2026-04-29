@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import { unlink } from 'node:fs/promises';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { uploadSingleFile } from '../../middleware/upload.middleware.js';
+import { scanFileForThreats } from '../security/file-security.service.js';
 import { createFileRecord, listFiles } from './files.service.js';
 
 export const filesRouter = Router();
@@ -32,6 +34,12 @@ filesRouter.post('/upload', (req, res) => {
 
     if (!req.file) {
       res.status(400).json({ mensagem: 'Nenhum arquivo enviado.' });
+      return;
+    }
+
+    if (scanFileForThreats(req.file.path)) {
+      void unlink(req.file.path).catch(() => undefined);
+      res.status(400).json({ mensagem: 'Arquivo bloqueado pelo scan de segurança.' });
       return;
     }
 

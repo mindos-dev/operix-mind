@@ -34,6 +34,14 @@ export function listProjects(userId: string) {
   return projects.filter((project) => project.userId === userId);
 }
 
+export function deleteProjectsByUserId(userId: string) {
+  for (let i = projects.length - 1; i >= 0; i -= 1) {
+    if (projects[i].userId === userId) {
+      projects.splice(i, 1);
+    }
+  }
+}
+
 export function ensureDemoProject(userId: string) {
   if (!projects.some((project) => project.userId === userId)) {
     createProject({

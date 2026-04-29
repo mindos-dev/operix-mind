@@ -13,4 +13,5 @@ export declare function createProject(input: {
     descricao?: string;
 }): Project;
 export declare function listProjects(userId: string): Project[];
+export declare function deleteProjectsByUserId(userId: string): void;
 export declare function ensureDemoProject(userId: string): void;

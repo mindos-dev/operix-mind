@@ -46,3 +46,11 @@ export function createFileRecord(input: {
 export function listFiles(userId: string) {
   return files.filter((file) => file.userId === userId);
 }
+
+export function deleteFilesByUserId(userId: string) {
+  for (let i = files.length - 1; i >= 0; i -= 1) {
+    if (files[i].userId === userId) {
+      files.splice(i, 1);
+    }
+  }
+}

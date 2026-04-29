@@ -1,5 +1,6 @@
 export interface ExecuteAiInput {
     mensagem: string;
+    userId?: string;
 }
 export declare function executeAiFlow(input: ExecuteAiInput): Promise<{
     plano: import("@operix-mind/ai-agents").DeepClawPlan;
