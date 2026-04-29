@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: operix-mind-postgres
+    environment:
+      POSTGRES_USER: operix
+      POSTGRES_PASSWORD: operix
+      POSTGRES_DB: operix_mind
+    ports:
+      - "5432:5432"
+    volumes:
+      - operix_mind_postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: operix-mind-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  operix_mind_postgres:

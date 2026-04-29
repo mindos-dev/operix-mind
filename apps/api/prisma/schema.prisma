@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  plano     String   @default("GRATIS")
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  projetos Project[]
+  mensagens AiMessage[]
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  nome      String
+  descricao String   @default("")
+  status    String   @default("rascunho")
+  userId    String
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  usuario User @relation(fields: [userId], references: [id])
+  arquivos FileAsset[]
+}
+
+model FileAsset {
+  id           String   @id @default(uuid())
+  nomeOriginal String
+  formato      String
+  tamanhoBytes Int
+  caminho      String
+  status       String   @default("recebido")
+  projectId    String?
+  criadoEm     DateTime @default(now())
+
+  projeto Project? @relation(fields: [projectId], references: [id])
+}
+
+model AiMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  role      String
+  conteudo  String
+  criadoEm  DateTime @default(now())
+
+  usuario User @relation(fields: [userId], references: [id])
+}
+
+model TokenUsage {
+  id                String   @id @default(uuid())
+  agente            String
+  modelo            String
+  tipoTarefa        String
+  tokensEstimados   Int
+  custoEstimadoUsd  Decimal
+  criadoEm          DateTime @default(now())
+}

@@ -1,0 +1,34 @@
+{
+  "name": "operix-mind",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OPERIX MIND - console SaaS/híbrido de IA, automação, arquivos e agentes.",
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "packages/ai-agents",
+    "packages/ai-runtime",
+    "packages/shared",
+    "local-agent"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w @operix-mind/api\" \"npm run dev -w @operix-mind/web\"",
+    "dev:api": "npm run dev -w @operix-mind/api",
+    "dev:web": "npm run dev -w @operix-mind/web",
+    "dev:local-agent": "npm run dev -w @operix-mind/local-agent",
+    "build": "npm run build -w @operix-mind/shared && npm run build -w @operix-mind/ai-agents && npm run build -w @operix-mind/ai-runtime && npm run build -w @operix-mind/api && npm run build -w @operix-mind/web",
+    "typecheck": "npm run typecheck -w @operix-mind/shared && npm run typecheck -w @operix-mind/ai-agents && npm run typecheck -w @operix-mind/ai-runtime && npm run build -w @operix-mind/ai-runtime && npm run typecheck -w @operix-mind/api && npm run typecheck -w @operix-mind/web && npm run typecheck -w @operix-mind/local-agent",
+    "prisma:generate": "npm run prisma:generate -w @operix-mind/api",
+    "prisma:migrate": "npm run prisma:migrate -w @operix-mind/api",
+    "simulate:ai": "tsx scripts/simulate-deep-claw.ts",
+    "test": "npm run test -w @operix-mind/api"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "tsx": "^4.19.4",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  }
+}
