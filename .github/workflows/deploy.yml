@@ -5,27 +5,22 @@ on:
   push:
     branches: [main]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Só executa se as secrets existirem
-    env:
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      
       - run: npm ci
       - run: npm run build
-      
       - name: Deploy via SSH
-        # Verificação correta para secrets
-        if: ${{ env.DEPLOY_HOST != '' }}
+        if: ${{ secrets.DEPLOY_HOST != '' }}
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
