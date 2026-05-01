@@ -1,19 +1,19 @@
 import { createApp } from './app.js';
-import { env } from './config/env.js';
-import { hasDatabase } from './db/prisma.js';
-import { bootstrapPersistentAccounts } from './modules/auth/auth.service.js';
-import { logger } from './modules/observability/logger.js';
 
-async function start() {
-  if (hasDatabase()) {
-    await bootstrapPersistentAccounts();
+const PORT = process.env.PORT || 3000;
+
+async function startServer() {
+  try {
+    const app = await createApp();
+    app.listen(PORT, () => {
+      console.log(`🚀 OPERIX Mind API running on http://localhost:${PORT}`);
+      console.log(`📡 Health: http://localhost:${PORT}/health`);
+      console.log(`🔧 Setup: http://localhost:${PORT}/setup`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
   }
-
-  const app = createApp();
-
-  app.listen(env.port, () => {
-    logger.info({ port: env.port }, 'API Mind_IA rodando');
-  });
 }
 
-void start();
+startServer();
