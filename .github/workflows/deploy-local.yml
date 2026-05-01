@@ -1,0 +1,23 @@
+name: Deploy Local
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Docker Deploy
+        run: |
+          cd ~/operix-mind
+          docker compose -f docker-compose.prod.yml down || true
+          docker compose -f docker-compose.prod.yml up -d --build
+          
+      - name: Health Check
+        run: |
+          sleep 5
+          curl -f http://localhost:3000/health || echo "Aguardando serviço..."
