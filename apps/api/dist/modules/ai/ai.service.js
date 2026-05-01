@@ -1,6 +1,7 @@
 import { clearAgentExecutionLogs, configuredAgents, createDeepClawPlan, executeRoutedPrompt, formatFinalAnswerPortuguese, getAgentExecutionLogs, getTokenUsageLogs, estimateTokens } from '@operix-mind/ai-agents';
 import { config } from '../../config/config.service.js';
 import { addAuditLog, addSecurityLog } from '../logs/logs.service.js';
+import { recordAiRequest } from '../observability/observability.service.js';
 import { detectPromptInjection, limitContext, logAiUsage, registerAiUsage, sanitizePrompt } from '../security/ai-security.service.js';
 export async function executeAiFlow(input) {
     clearAgentExecutionLogs();
@@ -55,6 +56,7 @@ export async function executeAiFlow(input) {
             tokens: getTokenUsageLogs()
         }
     });
+    recordAiRequest();
     logAiUsage({ userId, action: 'execute', model: respostas[0]?.model, tokens: tokenBudget });
     return {
         plano,

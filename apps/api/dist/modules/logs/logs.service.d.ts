@@ -6,10 +6,13 @@ export interface LogEntry {
     mensagem: string;
     detalhes?: unknown;
     criadoEm: string;
+    tenantId?: string;
+    userId?: string;
 }
-export declare function addLog(entry: Omit<LogEntry, 'id' | 'criadoEm'>): LogEntry;
-export declare function addAuditLog(entry: Omit<LogEntry, 'id' | 'criadoEm' | 'level'>): LogEntry;
-export declare function addSecurityLog(origem: string, mensagem: string, detalhes?: unknown): LogEntry;
-export declare function addErrorLog(origem: string, mensagem: string, detalhes?: unknown): LogEntry;
-export declare function listLogs(): LogEntry[];
-export declare function purgeLogsByUserId(userId: string): number;
+export declare function resetLogsStore(): void;
+export declare function addLog(entry: Omit<LogEntry, 'id' | 'criadoEm'>): Promise<LogEntry>;
+export declare function addAuditLog(entry: Omit<LogEntry, 'id' | 'criadoEm' | 'level'>): Promise<LogEntry>;
+export declare function addSecurityLog(origem: string, mensagem: string, detalhes?: unknown, tenantId?: string, userId?: string): Promise<LogEntry>;
+export declare function addErrorLog(origem: string, mensagem: string, detalhes?: unknown, tenantId?: string, userId?: string): Promise<LogEntry>;
+export declare function listLogs(): Promise<LogEntry[]>;
+export declare function purgeLogsByUserId(userId: string): Promise<number>;

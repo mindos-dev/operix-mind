@@ -6,18 +6,26 @@ function accessPayload(user: AuthUser): AuthTokenPayload {
   return {
     sub: user.id,
     email: user.email,
+    name: user.nome,
     role: user.role,
     plano: user.plano,
+    tenantId: user.tenantId,
+    tenantNome: user.tenantNome,
+    deviceId: user.deviceId || 'session',
     type: 'access'
   };
 }
 
-function refreshPayload(user: AuthUser, version: number): AuthTokenPayload {
+function refreshPayload(user: AuthUser, version: number, deviceId: string): AuthTokenPayload {
   return {
     sub: user.id,
     email: user.email,
+    name: user.nome,
     role: user.role,
     plano: user.plano,
+    tenantId: user.tenantId,
+    tenantNome: user.tenantNome,
+    deviceId,
     type: 'refresh',
     version
   };
@@ -27,8 +35,8 @@ export function signAccessToken(user: AuthUser): string {
   return jwt.sign(accessPayload(user), config.jwt.accessSecret, { expiresIn: config.jwt.accessTtl as jwt.SignOptions['expiresIn'] });
 }
 
-export function signRefreshToken(user: AuthUser, version: number): string {
-  return jwt.sign(refreshPayload(user, version), config.jwt.refreshSecret, { expiresIn: config.jwt.refreshTtl as jwt.SignOptions['expiresIn'] });
+export function signRefreshToken(user: AuthUser, version: number, deviceId = user.deviceId || 'session'): string {
+  return jwt.sign(refreshPayload(user, version, deviceId), config.jwt.refreshSecret, { expiresIn: config.jwt.refreshTtl as jwt.SignOptions['expiresIn'] });
 }
 
 export function verifyAccessToken(token: string): AuthTokenPayload {

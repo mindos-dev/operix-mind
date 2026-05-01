@@ -13,11 +13,56 @@ model User {
   email     String   @unique
   senhaHash String
   plano     String   @default("GRATIS")
+  role      String   @default("user")
+  tenantId  String
   criadoEm  DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
+  tenant   Organization @relation(fields: [tenantId], references: [id])
   projetos Project[]
+  arquivos FileAsset[]
   mensagens AiMessage[]
+  refreshSessions RefreshSession[]
+  consents ConsentRecord[]
+  auditLogs AuditLog[]
+  securityLogs SecurityLog[]
+  apiKeys ApiKey[]
+  telegramIntegrations TelegramIntegration[]
+  telegramPairingSessions TelegramPairingSession[]
+  telegramFiles TelegramFile[]
+  telegramTasks TelegramTask[]
+  privacyRequests PrivacyRequest[]
+  biDataSources BiDataSource[]
+  biDatasets BiDataset[]
+  biTransformations BiTransformation[]
+  biMetrics BiMetric[]
+  biDashboards BiDashboard[]
+  biReports BiReport[]
+  biQueries BiQuery[]
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  nome      String
+  slug      String   @unique
+  plano     String   @default("GRATIS")
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  users     User[]
+  projects  Project[]
+  files     FileAsset[]
+  consents  ConsentRecord[]
+  auditLogs AuditLog[]
+  securityLogs SecurityLog[]
+  refreshSessions RefreshSession[]
+  telegramIntegrations TelegramIntegration[]
+  apiKeys ApiKey[]
+  privacyRequests PrivacyRequest[]
+  systemSettings SystemSetting[]
+  biDataSources BiDataSource[]
+  biDatasets BiDataset[]
+  biDashboards BiDashboard[]
 }
 
 model Project {
@@ -26,10 +71,12 @@ model Project {
   descricao String   @default("")
   status    String   @default("rascunho")
   userId    String
+  tenantId  String
   criadoEm  DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
   usuario User @relation(fields: [userId], references: [id])
+  tenant  Organization @relation(fields: [tenantId], references: [id])
   arquivos FileAsset[]
 }
 
@@ -41,9 +88,14 @@ model FileAsset {
   caminho      String
   status       String   @default("recebido")
   projectId    String?
+  userId       String
+  tenantId     String
   criadoEm     DateTime @default(now())
 
   projeto Project? @relation(fields: [projectId], references: [id])
+  usuario User @relation(fields: [userId], references: [id])
+  tenant  Organization @relation(fields: [tenantId], references: [id])
+  eventos FileProcessingEvent[]
 }
 
 model AiMessage {
@@ -56,6 +108,134 @@ model AiMessage {
   usuario User @relation(fields: [userId], references: [id])
 }
 
+model RefreshSession {
+  id               String   @id @default(uuid())
+  userId           String
+  tenantId         String
+  deviceId         String
+  refreshTokenHash String
+  version          Int      @default(1)
+  revokedAt        DateTime?
+  expiresAt        DateTime
+  criadoEm         DateTime @default(now())
+  atualizadoEm     DateTime @updatedAt
+
+  usuario User @relation(fields: [userId], references: [id])
+  tenant  Organization @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, deviceId])
+}
+
+model ConsentRecord {
+  id          String   @id @default(uuid())
+  userId      String
+  tenantId    String
+  scope       String
+  accepted    Boolean
+  version     String
+  acceptedAt  DateTime @default(now())
+
+  usuario User @relation(fields: [userId], references: [id])
+  tenant  Organization @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, userId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tenantId  String?
+  userId    String?
+  level     String
+  origem    String
+  mensagem  String
+  detalhes  Json?
+  criadoEm  DateTime @default(now())
+
+  tenant Organization? @relation(fields: [tenantId], references: [id])
+  usuario User? @relation(fields: [userId], references: [id])
+}
+
+model SecurityLog {
+  id        String   @id @default(uuid())
+  tenantId  String?
+  userId    String?
+  origem    String
+  mensagem  String
+  detalhes  Json?
+  criadoEm  DateTime @default(now())
+
+  tenant Organization? @relation(fields: [tenantId], references: [id])
+  usuario User? @relation(fields: [userId], references: [id])
+}
+
+model PrivacyRequest {
+  id        String   @id @default(uuid())
+  userId    String
+  tenantId  String
+  type      String
+  status    String   @default("pending")
+  payload   Json?
+  createdAt DateTime @default(now())
+  completedAt DateTime?
+
+  usuario User @relation(fields: [userId], references: [id])
+  tenant  Organization @relation(fields: [tenantId], references: [id])
+}
+
+model ApiKey {
+  id            String   @id @default(uuid())
+  keyPrefix     String
+  keyHash       String   @unique
+  name          String
+  scopes        Json?
+  tenantId      String
+  userId        String
+  status        String   @default("active")
+  expiresAt     DateTime?
+  lastUsedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant Organization @relation(fields: [tenantId], references: [id])
+  usuario User @relation(fields: [userId], references: [id])
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json?
+  tenantId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Organization? @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, key])
+}
+
+model OAuthProviderOverride {
+  id         String   @id @default(uuid())
+  tenantId   String   @default("global")
+  provider   String
+  enabled    Boolean
+  updatedBy  String?
+  updatedAt  DateTime @updatedAt
+  criadoEm   DateTime @default(now())
+
+  @@unique([tenantId, provider])
+}
+
+model FileProcessingEvent {
+  id        String   @id @default(uuid())
+  fileId    String
+  status    String
+  step      String
+  detalhes  Json?
+  criadoEm  DateTime @default(now())
+
+  arquivo FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
+
 model TokenUsage {
   id                String   @id @default(uuid())
   agente            String
@@ -64,4 +244,225 @@ model TokenUsage {
   tokensEstimados   Int
   custoEstimadoUsd  Decimal
   criadoEm          DateTime @default(now())
+}
+
+model BiDataSource {
+  id                 String   @id @default(uuid())
+  userId             String
+  tenantId           String
+  name               String
+  type               String
+  status             String   @default("active")
+  configEncryptedJson Json?
+  lastSyncAt         DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  usuario User @relation(fields: [userId], references: [id])
+  tenant  Organization @relation(fields: [tenantId], references: [id])
+  datasets BiDataset[]
+}
+
+model BiDataset {
+  id             String   @id @default(uuid())
+  userId         String
+  tenantId       String
+  dataSourceId   String?
+  name           String
+  description    String   @default("")
+  status         String   @default("ready")
+  rowCount       Int      @default(0)
+  columnCount    Int      @default(0)
+  storagePath    String
+  schemaJson     Json?
+  profileJson    Json?
+  modelJson      Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  usuario User @relation(fields: [userId], references: [id])
+  tenant  Organization @relation(fields: [tenantId], references: [id])
+  source  BiDataSource? @relation(fields: [dataSourceId], references: [id], onDelete: SetNull)
+  tables  BiTable[]
+  transformations BiTransformation[]
+  metrics BiMetric[]
+  dashboards BiDashboard[]
+  queries BiQuery[]
+}
+
+model BiTable {
+  id         String   @id @default(uuid())
+  datasetId  String
+  name       String
+  schemaJson Json?
+  rowCount   Int      @default(0)
+  sampleJson Json?
+  createdAt  DateTime @default(now())
+
+  dataset BiDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+}
+
+model BiTransformation {
+  id         String   @id @default(uuid())
+  datasetId  String
+  userId     String
+  stepOrder  Int
+  type       String
+  configJson Json?
+  createdAt  DateTime @default(now())
+
+  dataset BiDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  usuario User @relation(fields: [userId], references: [id])
+}
+
+model BiMetric {
+  id          String   @id @default(uuid())
+  datasetId   String
+  userId      String
+  name        String
+  description String   @default("")
+  expressionJson Json?
+  aggregation String
+  field       String
+  format      String   @default("number")
+  createdAt   DateTime @default(now())
+
+  dataset BiDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  usuario User @relation(fields: [userId], references: [id])
+}
+
+model BiDashboard {
+  id          String   @id @default(uuid())
+  userId      String
+  tenantId    String
+  datasetId   String
+  title       String
+  description String   @default("")
+  layoutJson  Json?
+  filtersJson Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  usuario User @relation(fields: [userId], references: [id])
+  tenant  Organization @relation(fields: [tenantId], references: [id])
+  dataset BiDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  widgets BiWidget[]
+  reports BiReport[]
+}
+
+model BiWidget {
+  id          String   @id @default(uuid())
+  dashboardId String
+  type        String
+  title       String
+  configJson  Json?
+  positionJson Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  dashboard BiDashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+}
+
+model BiReport {
+  id          String   @id @default(uuid())
+  userId      String
+  dashboardId String
+  title       String
+  summary     String   @default("")
+  exportPath  String
+  createdAt   DateTime @default(now())
+
+  usuario User @relation(fields: [userId], references: [id])
+  dashboard BiDashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+}
+
+model BiQuery {
+  id         String   @id @default(uuid())
+  userId     String
+  datasetId  String
+  question   String
+  answer     String
+  queryJson  Json?
+  createdAt  DateTime @default(now())
+
+  usuario User @relation(fields: [userId], references: [id])
+  dataset BiDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+}
+
+model TelegramIntegration {
+  id                    String   @id @default(uuid())
+  userId                String
+  tenantId              String
+  botId                 String
+  botUsername           String
+  botName               String
+  encryptedBotToken     String
+  webhookSecret         String   @unique
+  status                String   @default("pending")
+  chatId                String?
+  telegramUserId        String?
+  allowedTelegramUserIds Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  connectedAt           DateTime?
+  lastUpdateAt          DateTime?
+  lastError             String?
+
+  usuario User @relation(fields: [userId], references: [id])
+  tenant  Organization @relation(fields: [tenantId], references: [id])
+  pairingSessions TelegramPairingSession[]
+  files TelegramFile[]
+  tasks TelegramTask[]
+
+  @@unique([tenantId, botId])
+}
+
+model TelegramPairingSession {
+  id             String   @id @default(uuid())
+  integrationId  String
+  userId         String
+  pairingCode    String   @unique
+  status         String   @default("pending")
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  completedAt    DateTime?
+
+  integration TelegramIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  usuario User @relation(fields: [userId], references: [id])
+}
+
+model TelegramFile {
+  id                  String   @id @default(uuid())
+  integrationId      String
+  userId             String
+  chatId             String
+  telegramFileId     String
+  originalFilename   String
+  mimeType           String
+  size               Int
+  localPath          String
+  classification     String   @default("interno")
+  scanStatus         String   @default("pending")
+  createdAt          DateTime @default(now())
+
+  integration TelegramIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  usuario User @relation(fields: [userId], references: [id])
+}
+
+model TelegramTask {
+  id               String   @id @default(uuid())
+  integrationId    String
+  userId           String
+  chatId           String
+  command          String
+  prompt           String
+  fileIds          Json?
+  status           String   @default("pending")
+  resultSummary    String?
+  resultFilePath   String?
+  createdAt        DateTime @default(now())
+  completedAt      DateTime?
+
+  integration TelegramIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  usuario User @relation(fields: [userId], references: [id])
 }

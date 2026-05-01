@@ -1,9 +1,11 @@
+import { getPrismaClient, hasDatabase } from '../../db/prisma.js';
 import { addAuditLog } from '../logs/logs.service.js';
 
 export type ConsentScope = 'processing' | 'ai_assistance' | 'storage' | 'analytics' | 'marketing';
 
 export interface ConsentRecord {
   userId: string;
+  tenantId: string;
   scope: ConsentScope;
   accepted: boolean;
   acceptedAt: string;
@@ -11,6 +13,10 @@ export interface ConsentRecord {
 }
 
 const consents = new Map<string, ConsentRecord[]>();
+
+export function resetConsentsStore() {
+  consents.clear();
+}
 
 export function requestConsent(scope: ConsentScope, version = '1.0') {
   return {
@@ -21,36 +27,92 @@ export function requestConsent(scope: ConsentScope, version = '1.0') {
   };
 }
 
-export function recordConsent(userId: string, scope: ConsentScope, accepted: boolean, version = '1.0') {
+export async function recordConsent(userId: string, tenantId: string, scope: ConsentScope, accepted: boolean, version = '1.0') {
   const entry: ConsentRecord = {
     userId,
+    tenantId,
     scope,
     accepted,
     acceptedAt: new Date().toISOString(),
     version
   };
 
-  const current = consents.get(userId) || [];
-  current.unshift(entry);
-  consents.set(userId, current);
+  if (hasDatabase()) {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      await prisma.consentRecord.create({
+        data: {
+          userId,
+          tenantId,
+          scope,
+          accepted,
+          version,
+          acceptedAt: new Date(entry.acceptedAt)
+        }
+      });
+    }
+  } else {
+    const current = consents.get(tenantId) || [];
+    current.unshift(entry);
+    consents.set(tenantId, current);
+  }
 
-  addAuditLog({
+  await addAuditLog({
     origem: 'privacy',
     mensagem: accepted ? 'Consentimento registrado.' : 'Consentimento recusado.',
-    detalhes: { userId, scope, accepted, version }
+    detalhes: { userId, tenantId, scope, accepted, version },
+    tenantId,
+    userId
   });
 
   return entry;
 }
 
-export function hasConsent(userId: string, scope: ConsentScope) {
-  return (consents.get(userId) || []).some((record) => record.scope === scope && record.accepted);
+export async function hasConsent(userId: string, tenantId: string, scope: ConsentScope) {
+  if (hasDatabase()) {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      const record = await prisma.consentRecord.findFirst({
+        where: { userId, tenantId, scope, accepted: true },
+        orderBy: { acceptedAt: 'desc' }
+      });
+      return Boolean(record);
+    }
+  }
+
+  return (consents.get(tenantId) || []).some((record) => record.userId === userId && record.scope === scope && record.accepted);
 }
 
-export function listConsents(userId: string) {
-  return [...(consents.get(userId) || [])];
+export async function listConsents(tenantId: string) {
+  if (hasDatabase()) {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      const rows = await prisma.consentRecord.findMany({
+        where: { tenantId },
+        orderBy: { acceptedAt: 'desc' }
+      });
+      return rows.map((row) => ({
+        userId: row.userId,
+        tenantId: row.tenantId,
+        scope: row.scope as ConsentScope,
+        accepted: row.accepted,
+        acceptedAt: row.acceptedAt.toISOString(),
+        version: row.version
+      }));
+    }
+  }
+
+  return [...(consents.get(tenantId) || [])];
 }
 
-export function deleteConsents(userId: string) {
-  consents.delete(userId);
+export async function deleteConsents(tenantId: string) {
+  if (hasDatabase()) {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      await prisma.consentRecord.deleteMany({ where: { tenantId } });
+      return;
+    }
+  }
+
+  consents.delete(tenantId);
 }

@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: operix
+          POSTGRES_PASSWORD: operix
+          POSTGRES_DB: operix_mind
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U operix -d operix_mind"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://operix:operix@localhost:5434/operix_mind?schema=public
+      JWT_SECRET: ci-secret-ci-secret-ci-secret
+      JWT_ACCESS_SECRET: ci-access-secret-ci-access-secret
+      JWT_REFRESH_SECRET: ci-refresh-secret-ci-refresh-secret
+      SECRET_ENCRYPTION_KEY: ci-secret-encryption-key-123456
+      APP_PUBLIC_URL: http://localhost:3333
+      WEB_PUBLIC_URL: http://localhost:5173
+      CORS_ORIGIN: http://localhost:5173
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test

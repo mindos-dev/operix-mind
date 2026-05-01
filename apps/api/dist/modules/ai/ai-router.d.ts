@@ -18,5 +18,5 @@ export declare function routeAiRequest(input: {
         };
         cost: import("./cost-controller.js").CostEstimate;
         status: string;
-    } | undefined;
+    };
 };

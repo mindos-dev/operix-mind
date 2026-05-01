@@ -20,15 +20,25 @@
     "typecheck": "npm run typecheck -w @operix-mind/shared && npm run typecheck -w @operix-mind/ai-agents && npm run typecheck -w @operix-mind/ai-runtime && npm run build -w @operix-mind/ai-runtime && npm run typecheck -w @operix-mind/api && npm run typecheck -w @operix-mind/web && npm run typecheck -w @operix-mind/local-agent",
     "prisma:generate": "npm run prisma:generate -w @operix-mind/api",
     "prisma:migrate": "npm run prisma:migrate -w @operix-mind/api",
+    "db:generate": "npm run prisma:generate -w @operix-mind/api",
+    "db:migrate": "npm run prisma:migrate -w @operix-mind/api",
+    "db:deploy": "npm run prisma:deploy -w @operix-mind/api",
+    "db:studio": "npm run prisma:studio -w @operix-mind/api",
+    "db:backup": "bash scripts/backup-postgres.sh",
+    "db:restore": "bash scripts/restore-postgres.sh",
     "simulate:ai": "tsx scripts/simulate-deep-claw.ts",
     "test": "npm run test -w @operix-mind/api"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.6",
     "concurrently": "^8.2.2",
     "tsx": "^4.19.4",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3"
+    "@prisma/client": "^6.19.3",
+    "mercadopago": "^2.12.0",
+    "qrcode": "^1.5.4",
+    "xlsx": "^0.18.5"
   }
 }

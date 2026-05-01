@@ -19,7 +19,7 @@ export const integrations = [
     ['box', 'Box', 'Armazenamento corporativo.', ['BOX_CLIENT_ID']],
     ['notion', 'Notion', 'Gerar documentos e bases.', ['NOTION_TOKEN']],
     ['slack', 'Slack', 'Enviar status e alertas.', ['SLACK_BOT_TOKEN']],
-    ['telegram', 'Telegram', 'Receber comandos e avisar conclusão.', ['TELEGRAM_BOT_TOKEN']],
+    ['telegram', 'Telegram', 'Conectar bot próprio, QR de pareamento e comandos DeepClaw.', ['TELEGRAM_BOT_TOKEN (usuário)']],
     ['whatsapp', 'WhatsApp', 'Atendimento futuro via canal oficial.', ['WHATSAPP_TOKEN'], true],
     ['aws', 'AWS', 'Base para S3, Bedrock, ECS, RDS e CloudWatch.', ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'], true],
     ['s3', 'S3', 'Uploads e arquivos gerados em produção.', ['AWS_S3_BUCKET'], true],

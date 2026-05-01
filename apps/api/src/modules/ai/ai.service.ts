@@ -10,6 +10,7 @@ import {
 } from '@operix-mind/ai-agents';
 import { config } from '../../config/config.service.js';
 import { addAuditLog, addSecurityLog } from '../logs/logs.service.js';
+import { recordAiRequest } from '../observability/observability.service.js';
 import { detectPromptInjection, limitContext, logAiUsage, registerAiUsage, sanitizePrompt } from '../security/ai-security.service.js';
 
 export interface ExecuteAiInput {
@@ -79,6 +80,7 @@ export async function executeAiFlow(input: ExecuteAiInput) {
     }
   });
 
+  recordAiRequest();
   logAiUsage({ userId, action: 'execute', model: respostas[0]?.model, tokens: tokenBudget });
 
   return {

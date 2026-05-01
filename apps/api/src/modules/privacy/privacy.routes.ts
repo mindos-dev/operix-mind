@@ -23,14 +23,19 @@ privacyRouter.post('/consent', validateBody(z.object({
   accepted: z.boolean(),
   version: z.string().min(1).default('1.0')
 })), (req, res) => {
-  res.status(201).json({ dados: registerUserConsent(req.user!.id, req.body.scope, req.body.accepted, req.body.version) });
+  Promise.resolve(registerUserConsent(req.user!.id, req.user!.tenantId, req.body.scope, req.body.accepted, req.body.version))
+    .then((dados) => res.status(201).json({ dados }))
+    .catch((error) => res.status(400).json({ mensagem: error instanceof Error ? error.message : 'Erro ao registrar consentimento.' }));
 });
 
 privacyRouter.get('/export', requirePermission('privacy:export'), (req, res) => {
-  res.json({ dados: exportUserData(req.user!.id) });
+  Promise.resolve(exportUserData(req.user!.id))
+    .then((dados) => res.json({ dados }))
+    .catch((error) => res.status(500).json({ mensagem: error instanceof Error ? error.message : 'Erro ao exportar dados.' }));
 });
 
 privacyRouter.delete('/delete', requirePermission('privacy:delete'), (req, res) => {
-  const deleted = deleteUserData(req.user!.id);
-  res.status(deleted ? 204 : 404).send();
+  Promise.resolve(deleteUserData(req.user!.id))
+    .then((deleted) => res.status(deleted ? 204 : 404).send())
+    .catch((error) => res.status(500).json({ mensagem: error instanceof Error ? error.message : 'Erro ao excluir dados.' }));
 });

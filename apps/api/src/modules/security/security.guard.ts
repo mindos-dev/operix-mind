@@ -11,6 +11,11 @@ export const requireSecureOrigin: RequestHandler = (req, res, next) => {
     return;
   }
 
+  if (req.path.startsWith('/telegram/webhook') || req.path.startsWith('/telegram/status')) {
+    next();
+    return;
+  }
+
   const origin = req.headers.origin || req.headers.referer || '';
   const hasAuthorization = Boolean(req.headers.authorization);
   if (!origin && !hasAuthorization) {

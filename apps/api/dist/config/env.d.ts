@@ -3,6 +3,7 @@ export declare const env: {
     nodeEnv: "development" | "test" | "production";
     port: number;
     corsOrigin: string;
+    databaseUrl: string;
     jwtSecret: string;
     jwtAccessSecret: string;
     jwtRefreshSecret: string;
@@ -11,4 +12,9 @@ export declare const env: {
     maxRequestsPerMinute: number;
     maxAiRequestsPerHour: number;
     maxAiTokensPerHour: number;
+    appPublicUrl: string;
+    secretEncryptionKey: string;
+    telegramStorageDir: string;
+    adminBootstrapEmail: string;
+    biStorageDir: string;
 };

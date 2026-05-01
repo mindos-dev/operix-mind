@@ -7,6 +7,7 @@ import { requirePermission } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validate.middleware.js';
 import { prepareBedrockCall } from './bedrock.service.js';
 import { executeAiFlow, listAgents } from './ai.service.js';
+import { analyzeDocumentRoute } from '../documents/documents.routes.js';
 
 export const aiRouter = Router();
 
@@ -27,6 +28,8 @@ aiRouter.post('/execute', authMiddleware, validateBody(z.object({ mensagem: z.st
     next(error);
   }
 });
+
+aiRouter.post('/analyze-document', ...analyzeDocumentRoute);
 
 aiRouter.post('/premium/estimate', authMiddleware, requirePermission('ai:premium'), validateBody(z.object({ prompt: z.string().trim().min(1).max(12000) })), (req, res) => {
   const prompt = req.body.prompt;

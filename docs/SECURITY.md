@@ -16,6 +16,7 @@
 - JWT access tokens with short TTL
 - Rotating refresh tokens
 - RBAC for route and action checks
+- OAuth2/SSO provider controls with admin override, restore and diagnostics export
 - Prompt sanitization and abuse limits
 - Upload validation, quarantine storage and basic scan
 - Log masking to avoid sensitive data exposure

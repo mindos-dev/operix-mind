@@ -7,6 +7,7 @@ Mind_IA is structured around concepts aligned with LGPD, ISO 27001, SOC 2 and OW
 - Consent tracking
 - User data export and deletion
 - Audit and security logs
+- Admin-only OAuth diagnostics export without secrets
 - Input validation
 - Rate limiting
 - Redaction of sensitive fields

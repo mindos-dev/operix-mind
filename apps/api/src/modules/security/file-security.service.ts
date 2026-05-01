@@ -3,6 +3,7 @@ import path from 'node:path';
 import { config } from '../../config/config.service.js';
 
 const quarantineDir = path.resolve(process.cwd(), 'storage/uploads/quarantine');
+const persistentUploadsDir = path.resolve(process.cwd(), 'storage/uploads/persistent');
 
 const mimeByExtension: Record<string, string[]> = {
   pdf: ['application/pdf'],
@@ -32,9 +33,21 @@ const suspiciousBytes = [
 ];
 
 mkdirSync(quarantineDir, { recursive: true });
+mkdirSync(persistentUploadsDir, { recursive: true });
 
 export function getQuarantineDir() {
   return quarantineDir;
+}
+
+export function getPersistentUploadsDir() {
+  return persistentUploadsDir;
+}
+
+export function getTenantUploadDir(tenantId: string) {
+  const safeTenant = tenantId.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+  const dir = path.join(persistentUploadsDir, safeTenant);
+  mkdirSync(dir, { recursive: true });
+  return dir;
 }
 
 export function isAllowedUpload(originalName: string, mimetype: string): boolean {
@@ -45,8 +58,8 @@ export function isAllowedUpload(originalName: string, mimetype: string): boolean
   return allowed.includes(mimetype) || mimetype === 'application/octet-stream';
 }
 
-export function scanFileForThreats(filePath: string) {
-  const buffer = readFileSync(filePath);
+export function scanFileForThreats(filePathOrBuffer: string | Buffer) {
+  const buffer = Buffer.isBuffer(filePathOrBuffer) ? filePathOrBuffer : readFileSync(filePathOrBuffer);
   return suspiciousBytes.some((needle) => buffer.includes(needle));
 }
 
